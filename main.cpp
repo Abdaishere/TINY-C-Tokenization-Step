@@ -271,9 +271,10 @@ inline int isReservedWord(const char *str) {
     return -1;
 }
 
-inline void printToken(int line, char *str, int tokenType) {
-    printf("[%d] %s (%s)\n", line, str, TokenTypeStr[tokenType]);
-    cout.flush();
+inline void printToken(int line, char *str, int tokenType, OutFile &out_file) {
+    char res[1000] = "";
+    sprintf(res, "[%d] %s (%s)", line, str, TokenTypeStr[tokenType]);
+    out_file.Out(res);
 }
 
 enum status {
@@ -305,16 +306,18 @@ int main() {
             }
 
             // letter token
-            if ((ch == ' ' || ch == '\t' || ch == '\r' || ch == '\n' || ch == 0 || *end >= compiler.in_file.cur_line_size) && was == letter) {
+            if ((ch == ' ' || ch == '\t' || ch == '\r' || ch == '\n' || ch == 0 ||
+                 *end >= compiler.in_file.cur_line_size) && was == letter) {
                 was = null;
                 short match = isReservedWord(getStr(start, *end, compiler.in_file.line_buf));
 
                 if (match >= 0) {
 
                     printToken(compiler.in_file.cur_line_num, getStr(start, *end, compiler.in_file.line_buf),
-                               reserved_words[match].type);
+                               reserved_words[match].type, compiler.out_file);
                 } else {
-                    printToken(compiler.in_file.cur_line_num, getStr(start, *end, compiler.in_file.line_buf), 21);
+                    printToken(compiler.in_file.cur_line_num, getStr(start, *end, compiler.in_file.line_buf), 21,
+                               compiler.out_file);
                 }
 
                 compiler.in_file.SkipSpaces();
@@ -333,7 +336,8 @@ int main() {
             if (*end > start && (was == LetterOrUnderscore || was == letter)) {
                 was = null;
 
-                printToken(compiler.in_file.cur_line_num, getStr(start, *end, compiler.in_file.line_buf), 21);
+                printToken(compiler.in_file.cur_line_num, getStr(start, *end, compiler.in_file.line_buf), 21,
+                           compiler.out_file);
 
                 compiler.in_file.SkipSpaces();
                 start = *end;
@@ -351,7 +355,8 @@ int main() {
             if (*end > start && was == digit) {
                 was = null;
 
-                printToken(compiler.in_file.cur_line_num, getStr(start, *end, compiler.in_file.line_buf), 22);
+                printToken(compiler.in_file.cur_line_num, getStr(start, *end, compiler.in_file.line_buf), 22,
+                           compiler.out_file);
 
                 compiler.in_file.SkipSpaces();
                 start = *end;
@@ -379,7 +384,7 @@ int main() {
                         was = comment;
 
                     printToken(compiler.in_file.cur_line_num, getStr(start, *end, compiler.in_file.line_buf),
-                               symbolic_tokens[match].type);
+                               symbolic_tokens[match].type, compiler.out_file);
 
                     compiler.in_file.SkipSpaces();
                     start = *end;
@@ -390,7 +395,7 @@ int main() {
             // close comment
             if (was == comment && ch == '}') {
                 was = null;
-                printToken(compiler.in_file.cur_line_num, "}", symbolic_tokens[12].type);
+                printToken(compiler.in_file.cur_line_num, "}", symbolic_tokens[12].type, compiler.out_file);
 
             }
 
